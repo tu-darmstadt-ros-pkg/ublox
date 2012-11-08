@@ -1,0 +1,19 @@
+<package>
+  <description brief="ublox_msgs">
+
+     ublox_msgs contains raw messages used by GNSS receiver modules of the company u-blox AG.
+
+  </description>
+  <author>Johannes Meyer</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ublox_msgs</url>
+
+  <depend package="ublox_serialization" />
+
+  <export>
+    <rosdoc external="http://www.u-blox.com/en/download/documents-a-resources.html"/>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lublox_msgs"/>
+  </export>
+
+</package>

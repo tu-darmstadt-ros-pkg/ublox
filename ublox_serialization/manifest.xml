@@ -1,0 +1,22 @@
+<package>
+  <description brief="ublox_serialization">
+
+     ublox_serialization provides header files for serialization of ROS messages to and from u-blox message format.
+
+  </description>
+  <author>Johannes Meyer</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ublox_serialization</url>
+
+  <depend package="roscpp"/>
+  <depend package="roscpp_serialization" />
+
+  <export>
+    <rosdoc external="http://www.u-blox.com/en/download/documents-a-resources.html"/>
+    <cpp cflags="-I${prefix}/include"/>
+  </export>
+
+</package>
+
+

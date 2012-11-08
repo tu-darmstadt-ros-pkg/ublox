@@ -1,0 +1,13 @@
+<stack>
+  <description brief="ublox">
+    Provides a ublox_gps node for uBlox GPS receivers and message and serialization packages for the binary UBX protocol.
+  </description>
+  <author>Johannes Meyer</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ublox</url>
+
+  <depend stack="ros" />
+  <depend stack="ros_comm" />
+
+</stack>

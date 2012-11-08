@@ -1,0 +1,20 @@
+<package>
+  <description brief="ublox_gps">
+
+     ublox_gps
+
+  </description>
+  <author>Johannes Meyer</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ublox_gps</url>
+
+  <depend package="roscpp" />
+  <depend package="ublox_msgs" />
+  <depend package="sensor_msgs" />
+
+  <depend package="ublox_serialization" />
+  
+</package>
+
+
