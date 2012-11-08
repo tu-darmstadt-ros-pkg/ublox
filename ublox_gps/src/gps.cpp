@@ -26,7 +26,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#include "gps.h"
+#include <ublox_gps/gps.h>
 
 #include <boost/thread/condition.hpp>
 #include <boost/asio.hpp>

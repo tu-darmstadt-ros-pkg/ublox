@@ -26,7 +26,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#include "gps.h"
+#include <ublox_gps/gps.h>
 #include <boost/asio/serial_port.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
