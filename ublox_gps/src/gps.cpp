@@ -114,6 +114,14 @@ bool Gps::setRate(uint8_t class_id, uint8_t message_id, unsigned int rate)
   return configure(msg);
 }
 
+bool Gps::enableSBAS(bool onoff) {
+  CfgSBAS msg;
+  msg.mode = (onoff ? CfgSBAS::MODE_ENABLED : 0);
+  msg.usage = 255;
+  msg.maxSBAS = 3;
+  return configure(msg);
+}
+
 bool Gps::poll(uint8_t class_id, uint8_t message_id, const std::vector<uint8_t>& payload) {
   if (!worker_) return false;
 

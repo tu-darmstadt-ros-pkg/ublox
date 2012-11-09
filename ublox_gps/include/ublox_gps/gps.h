@@ -53,6 +53,8 @@ public:
   bool setBaudrate(unsigned int baudrate);
   bool setRate(uint8_t class_id, uint8_t message_id, unsigned int rate);
 
+  bool enableSBAS(bool onoff);
+
   template <typename T> Callbacks::iterator subscribe(typename CallbackHandler_<T>::Callback callback, unsigned int rate);
   template <typename T> Callbacks::iterator subscribe(typename CallbackHandler_<T>::Callback callback);
   template <typename T> bool read(T& message, const boost::posix_time::time_duration& timeout = default_timeout_);
