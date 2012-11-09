@@ -45,9 +45,19 @@ Gps::~Gps()
   close();
 }
 
-void Gps::setBaudrate(unsigned int baudrate)
+bool Gps::setBaudrate(unsigned int baudrate)
 {
-  baudrate_ = baudrate;
+  baudrate_ = baudrate;  
+  if (!worker_) return true;
+
+  CfgPRT port;
+  port.baudRate = baudrate_;
+  port.mode = CfgPRT::MODE_RESERVED1 | CfgPRT::MODE_CHAR_LEN_8BIT | CfgPRT::MODE_PARITY_NO | CfgPRT::MODE_STOP_BITS_1;
+  port.inProtoMask = CfgPRT::PROTO_UBX;
+  port.outProtoMask = CfgPRT::PROTO_UBX;
+  port.portID = CfgPRT::PORT_ID_UART1;
+
+  return configure(port);
 }
 
 void Gps::initialize(const boost::shared_ptr<Worker> &worker)
@@ -69,29 +79,22 @@ void Gps::initialize(boost::asio::serial_port& serial_port, boost::asio::io_serv
 
   configured_ = false;
 
-  CfgPRT port;
-  port.baudRate = baudrate_;
-  port.mode = CfgPRT::MODE_RESERVED1 | CfgPRT::MODE_CHAR_LEN_8BIT | CfgPRT::MODE_PARITY_NO | CfgPRT::MODE_STOP_BITS_1;
-  port.inProtoMask = CfgPRT::PROTO_UBX;
-  port.outProtoMask = CfgPRT::PROTO_UBX;
-  port.portID = CfgPRT::PORT_ID_UART1;
-
   boost::asio::serial_port_base::baud_rate current_baudrate;
 
   serial_port.set_option(boost::asio::serial_port_base::baud_rate(4800));
   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
   if (debug) { serial_port.get_option(current_baudrate); std::cout << "Set baudrate " << current_baudrate.value() << std::endl; }
-  configure(port, false);
+  setBaudrate(baudrate_);
 
   serial_port.set_option(boost::asio::serial_port_base::baud_rate(38400));
   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
   if (debug) { serial_port.get_option(current_baudrate); std::cout << "Set baudrate " << current_baudrate.value() << std::endl; }
-  configure(port, false);
+  setBaudrate(baudrate_);
 
   serial_port.set_option(boost::asio::serial_port_base::baud_rate(baudrate_));
   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
   if (debug) { serial_port.get_option(current_baudrate); std::cout << "Set baudrate " << current_baudrate.value() << std::endl; }
-  if (!configure(port)) return;
+  if (!setBaudrate(baudrate_)) return;
 
   configured_ = true;
 }

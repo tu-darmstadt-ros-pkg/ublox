@@ -45,12 +45,12 @@ public:
   Gps();
   virtual ~Gps();
 
-  void setBaudrate(unsigned int baudrate);
   template <typename StreamT> void initialize(StreamT& stream, boost::asio::io_service& io_service);
   void initialize(const boost::shared_ptr<Worker> &worker);
   void close();
 
   bool configure();
+  bool setBaudrate(unsigned int baudrate);
   bool setRate(uint8_t class_id, uint8_t message_id, unsigned int rate);
 
   template <typename T> Callbacks::iterator subscribe(typename CallbackHandler_<T>::Callback callback, unsigned int rate);
