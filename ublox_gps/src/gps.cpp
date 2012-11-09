@@ -1,3 +1,4 @@
+
 //=================================================================================================
 // Copyright (c) 2012, Johannes Meyer, TU Darmstadt
 // All rights reserved.
@@ -28,154 +29,13 @@
 
 #include <ublox_gps/gps.h>
 
-#include <boost/thread/condition.hpp>
-#include <boost/asio.hpp>
-#include <boost/function.hpp>
-
-static const int debug = 0;
-
 namespace ublox_gps {
 
 using namespace ublox_msgs;
 
-template <typename StreamT>
-class Worker::Impl : public Worker
-{
-public:
-  typedef boost::function<void (unsigned char *, std::size_t&)> Callback;
-  Impl(StreamT& stream, boost::asio::io_service& io_service, Callback read_callback, std::size_t buffer_size = 8192);
-  virtual ~Impl();
-
-  bool send(const unsigned char *data, const unsigned int size);
-  void wait(const boost::posix_time::time_duration& timeout);
-
-protected:
-  void doRead();
-  void readEnd(const boost::system::error_code&, std::size_t);
-  void doWrite();
-  void doClose();
-
-  StreamT& stream_;
-  boost::asio::io_service& io_service_;
-
-  boost::mutex read_mutex_;
-  boost::condition read_condition_;
-  std::vector<unsigned char> in_;
-  std::size_t in_buffer_size_;
-
-  boost::mutex write_mutex_;
-  boost::condition write_condition_;
-  std::vector<unsigned char> out_;
-
-  boost::shared_ptr<boost::thread> background_thread_;
-  Callback read_callback_;
-
-  bool stopping_;
-};
-
-template <typename StreamT>
-Worker::Impl<StreamT>::Impl(StreamT& stream, boost::asio::io_service& io_service, Callback read_callback, std::size_t buffer_size)
-  : stream_(stream)
-  , io_service_(io_service)
-  , read_callback_(read_callback)
-  , stopping_(false)
-{
-  in_.resize(buffer_size);
-  in_buffer_size_ = 0;
-
-  out_.reserve(buffer_size);
-
-  io_service_.post(boost::bind(&Worker::Impl<StreamT>::doRead, this));
-  background_thread_.reset(new boost::thread(boost::bind(&boost::asio::io_service::run, &io_service_)));
-}
-
-template <typename StreamT>
-Worker::Impl<StreamT>::~Impl()
-{
-  io_service_.post(boost::bind(&Worker::Impl<StreamT>::doClose, this));
-  background_thread_->join();
-  io_service_.reset();
-}
-
-template <typename StreamT>
-bool Worker::Impl<StreamT>::send(const unsigned char *data, const unsigned int size) {
-  boost::mutex::scoped_lock lock(write_mutex_);
-
-  if (out_.capacity() - out_.size() < size) return false;
-  out_.insert(out_.end(), data, data + size);
-
-  io_service_.post(boost::bind(&Worker::Impl<StreamT>::doWrite, this));
-  return true;
-}
-
-template <typename StreamT>
-void Worker::Impl<StreamT>::doRead()
-{
-  // read_mutex_.lock();
-  stream_.async_read_some(boost::asio::buffer(in_.data() + in_buffer_size_, in_.size() - in_buffer_size_), boost::bind(&Worker::Impl<StreamT>::readEnd, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-}
-
-template <typename StreamT>
-void Worker::Impl<StreamT>::readEnd(const boost::system::error_code& error, std::size_t bytes_transfered)
-{
-  if (error) {
-    // do something
-
-  } else if (bytes_transfered > 0) {
-    in_buffer_size_ += bytes_transfered;
-
-    if (debug >= 4) {
-      std::cout << "received " << bytes_transfered << " bytes" << std::endl;
-      for(std::vector<unsigned char>::iterator it = in_.begin() + in_buffer_size_ - bytes_transfered; it != in_.begin() + in_buffer_size_; ++it) std::cout << std::hex << static_cast<unsigned int>(*it) << " ";
-      std::cout << std::dec << std::endl;
-    }
-
-    if (read_callback_) read_callback_(in_.data(), in_buffer_size_);
-
-    read_condition_.notify_all();
-  }
-
-  // read_mutex_.unlock();
-  if (!stopping_) io_service_.post(boost::bind(&Worker::Impl<StreamT>::doRead, this));
-}
-
-template <typename StreamT>
-void Worker::Impl<StreamT>::doWrite()
-{
-  boost::mutex::scoped_lock lock(write_mutex_);
-  if (out_.size() == 0) return;
-
-  boost::asio::write(stream_, boost::asio::buffer(out_.data(), out_.size()));
-
-  if (debug >= 2) {
-    std::cout << "sent " << out_.size() << " bytes:" << std::endl;
-    for(std::vector<unsigned char>::iterator it = out_.begin(); it != out_.end(); ++it) std::cout << std::hex << static_cast<unsigned int>(*it) << " ";
-    std::cout << std::dec << std::endl;
-  }
-  out_.clear();
-  write_condition_.notify_all();
-}
-
-template <typename StreamT>
-void Worker::Impl<StreamT>::doClose()
-{
-  stopping_ = true;
-  boost::system::error_code error;
-  stream_.cancel(error);
-}
-
-template <typename StreamT>
-void Worker::Impl<StreamT>::wait(const boost::posix_time::time_duration &timeout)
-{
-  boost::mutex::scoped_lock lock(read_mutex_);
-  read_condition_.timed_wait(lock, timeout);
-}
-
 boost::posix_time::time_duration Gps::default_timeout_(boost::posix_time::seconds(1.0));
 Gps::Gps()
-  : worker_(0)
-  , device_(0)
-  , configured_(false)
+  : configured_(false)
   , baudrate_(57600)
 {
 }
@@ -190,14 +50,12 @@ void Gps::setBaudrate(unsigned int baudrate)
   baudrate_ = baudrate;
 }
 
-template <typename StreamT>
-void Gps::initialize(StreamT& stream, boost::asio::io_service& io_service)
+void Gps::initialize(const boost::shared_ptr<Worker> &worker)
 {
   if (worker_) return;
-  worker_ = new Worker::Impl<StreamT>(stream, io_service, boost::bind(&Gps::readCallback, this, _1, _2));
-  device_ = &stream;
-
-  configured_ = true;
+  worker_ = worker;
+  worker_->setCallback(boost::bind(&Gps::readCallback, this, _1, _2));
+  configured_ = worker;
 }
 
 template void Gps::initialize(boost::asio::ip::tcp::socket& stream, boost::asio::io_service& io_service);
@@ -207,8 +65,7 @@ template <>
 void Gps::initialize(boost::asio::serial_port& serial_port, boost::asio::io_service& io_service)
 {
   if (worker_) return;
-  worker_ = new Worker::Impl<boost::asio::serial_port>(serial_port, io_service, boost::bind(&Gps::readCallback, this, _1, _2));
-  device_ = &serial_port;
+  initialize(boost::shared_ptr<Worker>(new AsyncWorker<boost::asio::serial_port>(serial_port, io_service)));
 
   configured_ = false;
 
@@ -241,9 +98,7 @@ void Gps::initialize(boost::asio::serial_port& serial_port, boost::asio::io_serv
 
 void Gps::close()
 {
-  delete worker_;
-  worker_ = 0;
-
+  worker_.reset();
   configured_ = false;
 }
 
@@ -302,7 +157,6 @@ void Gps::waitForAcknowledge(const boost::posix_time::time_duration& timeout) {
     worker_->wait(timeout);
   }
 }
-
 
 void Gps::readCallback(unsigned char *data, std::size_t& size) {
   ublox::Reader reader(data, size);

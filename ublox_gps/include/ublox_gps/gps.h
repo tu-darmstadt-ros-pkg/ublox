@@ -30,50 +30,14 @@
 #define UBLOX_GPS_H
 
 #include <boost/asio/io_service.hpp>
-#include <boost/thread.hpp>
-#include <boost/function.hpp>
-
 #include <vector>
 #include <map>
 
 #include <ublox/serialization/ublox_msgs.h>
+#include <ublox_gps/async_worker.h>
+#include <ublox_gps/callback.h>
 
 namespace ublox_gps {
-
-class CallbackHandler {
-public:
-  virtual void handle(ublox::Reader &reader) = 0;
-  virtual bool wait(const boost::posix_time::time_duration& timeout);
-  boost::mutex mutex_;
-  boost::condition_variable condition_;
-};
-
-template <typename T>
-class CallbackHandler_ : public CallbackHandler {
-public:
-  typedef boost::function<void(const T&)> Callback;
-  CallbackHandler_(const Callback& func = Callback()) : func_(func) {}
-  virtual void handle(ublox::Reader &reader);
-  virtual const T& get() { return message_; }
-
-private:
-  Callback func_;
-  T message_;
-};
-
-class Worker
-{
-public:
-  typedef boost::function<void (unsigned char *, std::size_t&)> Callback;
-  virtual ~Worker() {}
-
-  virtual bool send(const unsigned char *data, const unsigned int size) = 0;
-  virtual void wait(const boost::posix_time::time_duration& timeout) = 0;
-
-  template <typename StreamT> class Impl;
-};
-
-typedef std::multimap<std::pair<uint8_t,uint8_t>, boost::shared_ptr<CallbackHandler> > Callbacks;
 
 class Gps
 {
@@ -83,6 +47,7 @@ public:
 
   void setBaudrate(unsigned int baudrate);
   template <typename StreamT> void initialize(StreamT& stream, boost::asio::io_service& io_service);
+  void initialize(const boost::shared_ptr<Worker> &worker);
   void close();
 
   bool configure();
@@ -104,8 +69,7 @@ private:
   void readCallback(unsigned char *data, std::size_t& size);
 
 private:
-  Worker *worker_;
-  void *device_;
+  boost::shared_ptr<Worker> worker_;
   bool configured_;
   enum { WAIT, ACK, NACK } acknowledge_;
   unsigned int baudrate_;
@@ -114,6 +78,17 @@ private:
   Callbacks callbacks_;
   boost::mutex callback_mutex_;
 };
+
+template <typename StreamT>
+void Gps::initialize(StreamT& stream, boost::asio::io_service& io_service)
+{
+  if (worker_) return;
+  initialize(boost::shared_ptr<Worker>(new AsyncWorker<StreamT>(stream, io_service)));
+}
+
+template <> void Gps::initialize(boost::asio::serial_port& serial_port, boost::asio::io_service& io_service);
+extern template void Gps::initialize<boost::asio::ip::tcp::socket>(boost::asio::ip::tcp::socket& stream, boost::asio::io_service& io_service);
+// extern template void Gps::initialize<boost::asio::ip::udp::socket>(boost::asio::ip::udp::socket& stream, boost::asio::io_service& io_service);
 
 template <typename T>
 Callbacks::iterator Gps::subscribe(typename CallbackHandler_<T>::Callback callback, unsigned int rate)

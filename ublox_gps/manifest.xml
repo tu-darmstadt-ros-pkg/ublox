@@ -16,7 +16,7 @@
   <depend package="ublox_serialization" />
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lublox_gps"/>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
   </export>
   
 </package>
