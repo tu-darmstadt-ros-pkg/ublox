@@ -53,7 +53,7 @@ bool Gps::setBaudrate(unsigned int baudrate)
   CfgPRT port;
   port.baudRate = baudrate_;
   port.mode = CfgPRT::MODE_RESERVED1 | CfgPRT::MODE_CHAR_LEN_8BIT | CfgPRT::MODE_PARITY_NO | CfgPRT::MODE_STOP_BITS_1;
-  port.inProtoMask = CfgPRT::PROTO_UBX;
+  port.inProtoMask = CfgPRT::PROTO_UBX | CfgPRT::PROTO_NMEA | CfgPRT::PROTO_RTCM;
   port.outProtoMask = CfgPRT::PROTO_UBX;
   port.portID = CfgPRT::PORT_ID_UART1;
 
