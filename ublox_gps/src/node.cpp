@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    ROS_INFO("Openend serial port %s", device.c_str());
+    ROS_INFO("Opened serial port %s", device.c_str());
     gps.initialize(*serial, io_service);
   }
 
