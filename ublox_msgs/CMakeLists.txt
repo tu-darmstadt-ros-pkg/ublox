@@ -1,32 +1,79 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+# http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
+cmake_minimum_required(VERSION 2.8.3)
+project(ublox_msgs)
+# Load catkin and all dependencies required for this package
+find_package(catkin REQUIRED COMPONENTS message_generation ublox_serialization)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
-rosbuild_init()
+add_message_files(
+  FILES
+  AidALM.msg
+  AidEPH.msg
+  AidHUI.msg
+  CfgANT.msg
+  CfgCFG.msg
+  CfgMSG.msg
+  CfgNAV5.msg
+  CfgPRT.msg
+  CfgRATE.msg
+  CfgSBAS.msg
+  NavCLOCK.msg
+  NavDGPS.msg
+  NavDGPS_SV.msg
+  NavDOP.msg
+  NavPOSECEF.msg
+  NavPOSLLH.msg
+  NavSBAS.msg
+  NavSBAS_SV.msg
+  NavSOL.msg
+  NavSTATUS.msg
+  NavSVINFO.msg
+  NavSVINFO_SV.msg
+  NavTIMEGPS.msg
+  NavTIMEUTC.msg
+  NavVELECEF.msg
+  NavVELNED.msg
+  RxmALM.msg
+  RxmEPH.msg
+  RxmRAW.msg
+  RxmRAW_SV.msg
+  RxmSFRB.msg
+  RxmSVSI.msg
+  RxmSVSI_SV.msg
+)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+)
 
-#uncomment if you have defined messages
-rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+add_library(ublox_msgs SHARED src/ublox_msgs.cpp)
+add_dependencies(ublox_msgs ublox_msgs_gencpp)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+## DEPENDS: system dependencies of this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## INCLUDE_DIRS: 
+## LIBRARIES: libraries you create in this project that dependent projects also need
+catkin_package(
+    DEPENDS
+    CATKIN_DEPENDS message_runtime ublox_serialization
+    INCLUDE_DIRS include
+    LIBRARIES ublox_msgs
+)
 
-add_subdirectory(src)
+
+#############
+## Install ##
+#############
+
+install(TARGETS ublox_msgs
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/ublox/ include/ublox_msgs/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+)

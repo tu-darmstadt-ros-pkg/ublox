@@ -1,0 +1,25 @@
+<package>
+  <name>ublox_gps</name>
+  <version>0.1.0</version>
+  <description>Provides a ublox_gps node for uBlox GPS receivers and message and serialization packages for the binary UBX protocol.</description>
+  <maintainer email="meyer@fsr.tu-darmstadt.de">Johannes Meyer</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/ublox_gps</url>
+  <url type="bugtracker">http://github.com/tu-darmstadt-ros-pkg/ublox/issues</url>
+
+  <author email="meyer@fsr.tu-darmstadt.de">Johannes Meyer</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>boost</build_depend>
+  <build_depend>ublox_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>ublox_serialization</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>boost</run_depend>
+  <run_depend>ublox_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>ublox_serialization</run_depend>
+</package>
